@@ -357,8 +357,8 @@
       const k = agg(rows);
       const m = DATA.metas;
 
-      // Vendas manuais (fonte oficial)
-      const vTraf = leadsInRange(DATA.leadsAds);
+      // Vendas do TRÁFEGO = aba Vendas (número do gerenciador). Orgânico = aba Leads (manual).
+      const vTraf = k.vendas;
       const vOrg  = leadsInRange(DATA.leadsOrg);
       const vTot  = vTraf + vOrg;
 
@@ -367,10 +367,15 @@
       const hj = hoje();
       const daysElapsed = Math.max(1, Math.min(daysTotal, Math.round((hj-START)/864e5)+1));
       const diasRest = Math.max(1, Math.round((END-hj)/864e5));
-      // dias com dado (pra média/dia honesta)
-      const diasComVenda = Math.max(1, DATA.leadsDates.filter(kk=>{ const p=kk.split('-'); const d=new Date(+p[0],+p[1]-1,+p[2]); return inRange(d) && ((leadsDaily(DATA.leadsAds)[kk]||0)+(leadsDaily(DATA.leadsOrg)[kk]||0))>0; }).length);
+      // Vendas de tráfego por dia (aba Vendas) — pra média/dia e gráfico
+      const trafByDay={}; for(const r of rows){ if(r.vendas>0){ const kd=dkey(r.date); trafByDay[kd]=(trafByDay[kd]||0)+r.vendas; } }
+      const orgD=leadsDaily(DATA.leadsOrg);
+      // dias com QUALQUER venda no período (tráfego OU orgânico) — média/dia honesta
+      const _diasSet=new Set([...Object.keys(trafByDay), ...Object.keys(orgD).filter(kk=>orgD[kk]>0)]);
+      const diasComVenda = Math.max(1, [..._diasSet].filter(kk=>{ const p=kk.split('-'); return inRange(new Date(+p[0],+p[1]-1,+p[2])); }).length);
+      const diasComTraf  = Math.max(1, Object.keys(trafByDay).filter(kk=>{ const p=kk.split('-'); return inRange(new Date(+p[0],+p[1]-1,+p[2])); }).length);
 
-      const rTraf=Math.round(vTraf/diasComVenda), rOrg=Math.round(vOrg/diasComVenda), rTot=Math.round(vTot/diasComVenda);
+      const rTraf=Math.round(vTraf/diasComTraf), rOrg=Math.round(vOrg/diasComVenda), rTot=Math.round(vTot/diasComVenda);
       const rInv=div(k.inv, daysElapsed);
 
       function paceOf(atual, meta, ritmoAtual, f){
@@ -396,7 +401,7 @@
       // Tráfego (Meta Ads)
       h+=`<div class="lbl">Tráfego · Meta Ads (venda de ingresso)</div><div class="grid">`;
       h+=card('Investimento', BRL(k.inv), 'hl v', 'Verba: '+BRLk(VERBA), 'Usado '+PCT(div(k.inv,VERBA)*100))
-        +card('Ingressos Tráfego', NUM(vTraf), 'accent', 'Fonte: aba Leads')
+        +card('Ingressos Tráfego', NUM(vTraf), 'accent', 'Fonte: gerenciador')
         +card('CPA (ingresso)', vTraf>0?BRL(div(k.inv,vTraf)):'—', '', 'Custo por ingresso')
         +card('Faturamento Ingresso', BRL(k.fat), 'good')
         +card('CTR', PCT(k.ctr))
@@ -408,7 +413,7 @@
       h+=card('Cliques no Link', NUM(k.clk))
         +card('Visitas no Site', NUM(k.vis), '', '', 'Connect '+PCT(k.connect))
         +card('Checkouts', NUM(k.chk), '', '', 'Visita→Chk '+PCT(div(k.chk,k.vis)*100))
-        +card('Vendas Ingresso (Meta)', NUM(k.vendas), 'accent', 'Meta reporta', 'Chk→Venda '+PCT(div(k.vendas,k.chk)*100))
+        +card('Ingressos (gerenciador)', NUM(k.vendas), 'accent', '', 'Chk→Venda '+PCT(div(k.vendas,k.chk)*100))
         +card('Ticket Médio', k.vendas>0?BRL(k.ticket):'—')
         +card('ROAS', k.inv>0?PCT(0)==='0,0%'?'—':'':(k.roas).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})+'x');
       h+=`</div>`;
@@ -419,20 +424,19 @@
 
       el.innerHTML=h;
 
-      // Chart
+      // Chart — tráfego vem da aba Vendas (trafByDay), orgânico da aba Leads (orgD)
       const invByDay={}; for(const r of rows){ const kd=dkey(r.date); invByDay[kd]=(invByDay[kd]||0)+r.inv; }
-      const adsD=leadsDaily(DATA.leadsAds), orgD=leadsDaily(DATA.leadsOrg);
       const dset=new Set();
       Object.keys(invByDay).forEach(k=>{if(invByDay[k]>0)dset.add(k);});
-      Object.keys(adsD).forEach(k=>dset.add(k)); Object.keys(orgD).forEach(k=>dset.add(k));
+      Object.keys(trafByDay).forEach(k=>dset.add(k)); Object.keys(orgD).forEach(k=>{if(orgD[k]>0)dset.add(k);});
       const dates=[...dset].filter(k=>{const p=k.split('-');return inRange(new Date(+p[0],+p[1]-1,+p[2]));}).sort();
       const labels=dates.map(k=>{const p=k.split('-');return p[2]+'/'+p[1];});
       charts.push(new Chart(document.getElementById('cDia'),{
         data:{ labels, datasets:[
           { type:'bar', label:'Ingressos Orgânicos', data:dates.map(k=>orgD[k]||0), backgroundColor:'#00e5a0cc', borderRadius:4, stack:'v', yAxisID:'y' },
-          { type:'bar', label:'Ingressos Tráfego', data:dates.map(k=>adsD[k]||0), backgroundColor:'#00c6ffcc', borderRadius:4, stack:'v', yAxisID:'y' },
+          { type:'bar', label:'Ingressos Tráfego', data:dates.map(k=>trafByDay[k]||0), backgroundColor:'#00c6ffcc', borderRadius:4, stack:'v', yAxisID:'y' },
           { type:'line', label:'Investido/dia', data:dates.map(k=>invByDay[k]||0), borderColor:'#ffd166', backgroundColor:'rgba(255,209,102,.12)', borderWidth:2, pointRadius:3, pointBackgroundColor:'#ffd166', tension:.35, yAxisID:'y1' },
-          { type:'line', label:'CPA/dia', data:dates.map(k=>{ const v=adsD[k]||0; return v>0?+((invByDay[k]||0)/v).toFixed(2):null; }),
+          { type:'line', label:'CPA/dia', data:dates.map(k=>{ const v=trafByDay[k]||0; return v>0?+((invByDay[k]||0)/v).toFixed(2):null; }),
             borderColor:'#f97316', backgroundColor:'transparent', borderWidth:2, borderDash:[5,4], pointRadius:3, pointBackgroundColor:'#f97316', tension:.35, spanGaps:true, yAxisID:'y2' },
         ]},
         options:{ responsive:true, maintainAspectRatio:false, interaction:{mode:'index',intersect:false},
@@ -509,8 +513,8 @@
       const rows = DATA.vendas.filter(r=>inRange(r.date));
       if(!rows.length){ el.innerHTML='<div class="empty">Sem dados de tráfego no período.</div>'; return; }
       const a=agg(rows);
-      // Vendas oficiais do tráfego = aba Leads (manual). Fallback: Meta.
-      const vAds = leadsInRange(DATA.leadsAds) || a.vendas;
+      // Vendas do tráfego = aba Vendas (gerenciador).
+      const vAds = a.vendas;
       const cpa = div(a.inv, vAds);
       const d = lpDaily(rows);
 
