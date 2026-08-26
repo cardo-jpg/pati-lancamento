@@ -403,7 +403,6 @@
       h+=card('Investimento', BRL(k.inv), 'hl v', 'Verba: '+BRLk(VERBA), 'Usado '+PCT(div(k.inv,VERBA)*100))
         +card('Ingressos Tráfego', NUM(vTraf), 'accent', 'Fonte: gerenciador')
         +card('CPA (ingresso)', vTraf>0?BRL(div(k.inv,vTraf)):'—', '', 'Custo por ingresso')
-        +card('Faturamento Ingresso', BRL(k.fat), 'good')
         +card('CTR', PCT(k.ctr))
         +card('CPC', BRL(k.cpc));
       h+=`</div>`;
