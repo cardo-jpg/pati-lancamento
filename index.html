@@ -151,7 +151,7 @@
         <div class="brand-ic">🚀</div>
         <div>
           <h1>Lançamento SRI · Patrícia Voggt</h1>
-          <p>Venda de ingressos do Workshop · 19/08 → 27/09</p>
+          <p>Venda de ingressos do Workshop · 19/08 → 07/09</p>
         </div>
       </div>
       <div class="top-r">
@@ -192,7 +192,7 @@
     const AB_LEADS  = 'Leads ';      // vendas diárias manuais: Data, Leads Vendas Org, Leads Vendas Ads
     const AB_METAS  = 'Metas';       // total / orgânico / tráfego
     const START = new Date(2026, 7, 19);   // 19/08/2026 — início da venda de ingressos
-    const END   = new Date(2026, 8, 27);   // 27/09/2026 — fim
+    const END   = new Date(2026, 8, 7);    // 07/09/2026 — fim da venda de ingressos
     const FLOOR = new Date(2026, 7, 19);
     const VERBA = 25125;                    // R$ para vendas de ingresso
     const LP_URL = 'https://abroadercompany.com/desafio-us300-ads/';   // única LP do lançamento
@@ -389,7 +389,7 @@
         if(falta<=0) return { txt:'✓ meta batida', cls:'pc-ok', tip:'Meta atingida' };
         const need=Math.ceil(falta/diasRest);
         const cls = ritmoAtual>=need ? 'pc-ok':'pc-bad';
-        return { txt:f(need), cls, tip:f(falta)+' restantes ÷ '+diasRest+' dias até 27/09 · ritmo atual '+f(ritmoAtual)+'/dia' };
+        return { txt:f(need), cls, tip:f(falta)+' restantes ÷ '+diasRest+' dias até 07/09 · ritmo atual '+f(ritmoAtual)+'/dia' };
       }
 
       const metaOrg=m.org, metaTraf=m.traf, metaTot=m.total;
