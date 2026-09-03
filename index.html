@@ -305,7 +305,7 @@
       return t;
     }
     // Último acumulado preenchido (para "Tudo" sem filtro custom) — robustez extra
-    function leadsTotalAll(map){ let last=0; for(const k of DATA.leadsDates){ const v=map[k]; if(v!=null&&v!=='') last=v; } return last; }
+    function leadsTotalAll(map){ let last=0; for(const k of DATA.leadsDates){ const v=map[k]; if(v!=null&&v!==''&&v>0) last=v; } return last; }
 
     // ── Aggregation tráfego ─────────────────────────────────────────────────────
     function agg(rows){
