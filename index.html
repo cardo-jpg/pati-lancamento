@@ -179,7 +179,7 @@
     </div>
 
     <div id="body"><div class="loading">Carregando dados da planilha…</div></div>
-    <div class="foot" id="foot">Ingressos (tráfego e orgânico) vêm da aba "Leads" (preenchida manualmente todo dia) · métricas de mídia (invest, CTR, funil) da aba "Vendas"</div>
+    <div class="foot" id="foot">Lançamento SRI · Patrícia Voggt — atualizado diariamente</div>
   </div>
 
   <script>
@@ -401,7 +401,7 @@
       // Tráfego (Meta Ads)
       h+=`<div class="lbl">Tráfego · Meta Ads (venda de ingresso)</div><div class="grid">`;
       h+=card('Investimento', BRL(k.inv), 'hl v', 'Verba: '+BRLk(VERBA), 'Usado '+PCT(div(k.inv,VERBA)*100))
-        +card('Ingressos Tráfego', NUM(vTraf), 'accent', 'Fonte: planilha (aba Leads)')
+        +card('Ingressos Tráfego', NUM(vTraf), 'accent')
         +card('CPA (ingresso)', vTraf>0?BRL(div(k.inv,vTraf)):'—', '', 'Custo por ingresso')
         +card('CTR', PCT(k.ctr))
         +card('CPC', BRL(k.cpc));
@@ -412,7 +412,7 @@
       h+=card('Cliques no Link', NUM(k.clk))
         +card('Visitas no Site', NUM(k.vis), '', '', 'Connect '+PCT(k.connect))
         +card('Checkouts', NUM(k.chk), '', '', 'Visita→Chk '+PCT(div(k.chk,k.vis)*100))
-        +card('Ingressos (gerenciador)', NUM(k.vendas), 'accent', '', 'Chk→Venda '+PCT(div(k.vendas,k.chk)*100))
+        +card('Ingressos', NUM(k.vendas), 'accent', '', 'Chk→Venda '+PCT(div(k.vendas,k.chk)*100))
         +card('Ticket Médio', k.vendas>0?BRL(k.ticket):'—')
         +card('ROAS', k.inv>0?PCT(0)==='0,0%'?'—':'':(k.roas).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})+'x');
       h+=`</div>`;
