@@ -357,9 +357,11 @@
       const k = agg(rows);
       const m = DATA.metas;
 
-      // Ingressos TRÁFEGO e ORGÂNICO = aba Leads (manual). (k.vendas fica só p/ métricas do gerenciador.)
-      const vTraf = leadsInRange(DATA.leadsAds);
-      const vOrg  = leadsInRange(DATA.leadsOrg);
+      // Ingressos TRÁFEGO e ORGÂNICO = aba Leads (manual).
+      // "Tudo" (sem filtro) → total acumulado da coluna. Com filtro de período → incremento do período.
+      const semFiltro = presetDays==='all' && !fStart && !fEnd;
+      const vTraf = semFiltro ? leadsTotalAll(DATA.leadsAds) : leadsInRange(DATA.leadsAds);
+      const vOrg  = semFiltro ? leadsTotalAll(DATA.leadsOrg) : leadsInRange(DATA.leadsOrg);
       const vTot  = vTraf + vOrg;
 
       // dias
