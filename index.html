@@ -179,7 +179,7 @@
     </div>
 
     <div id="body"><div class="loading">Carregando dados da planilha…</div></div>
-    <div class="foot" id="foot">Vendas vêm da aba "Leads" (preenchida manualmente todo dia) · tráfego da aba "Vendas"</div>
+    <div class="foot" id="foot">Ingressos (tráfego e orgânico) vêm da aba "Leads" (preenchida manualmente todo dia) · métricas de mídia (invest, CTR, funil) da aba "Vendas"</div>
   </div>
 
   <script>
@@ -357,8 +357,8 @@
       const k = agg(rows);
       const m = DATA.metas;
 
-      // Vendas do TRÁFEGO = aba Vendas (número do gerenciador). Orgânico = aba Leads (manual).
-      const vTraf = k.vendas;
+      // Ingressos TRÁFEGO e ORGÂNICO = aba Leads (manual). (k.vendas fica só p/ métricas do gerenciador.)
+      const vTraf = leadsInRange(DATA.leadsAds);
       const vOrg  = leadsInRange(DATA.leadsOrg);
       const vTot  = vTraf + vOrg;
 
@@ -367,8 +367,8 @@
       const hj = hoje();
       const daysElapsed = Math.max(1, Math.min(daysTotal, Math.round((hj-START)/864e5)+1));
       const diasRest = Math.max(1, Math.round((END-hj)/864e5));
-      // Vendas de tráfego por dia (aba Vendas) — pra média/dia e gráfico
-      const trafByDay={}; for(const r of rows){ if(r.vendas>0){ const kd=dkey(r.date); trafByDay[kd]=(trafByDay[kd]||0)+r.vendas; } }
+      // Ingressos de tráfego por dia (aba Leads) — pra média/dia e gráfico
+      const trafByDay=leadsDaily(DATA.leadsAds);
       const orgD=leadsDaily(DATA.leadsOrg);
       // dias com QUALQUER venda no período (tráfego OU orgânico) — média/dia honesta
       const _diasSet=new Set([...Object.keys(trafByDay), ...Object.keys(orgD).filter(kk=>orgD[kk]>0)]);
@@ -401,7 +401,7 @@
       // Tráfego (Meta Ads)
       h+=`<div class="lbl">Tráfego · Meta Ads (venda de ingresso)</div><div class="grid">`;
       h+=card('Investimento', BRL(k.inv), 'hl v', 'Verba: '+BRLk(VERBA), 'Usado '+PCT(div(k.inv,VERBA)*100))
-        +card('Ingressos Tráfego', NUM(vTraf), 'accent', 'Fonte: gerenciador')
+        +card('Ingressos Tráfego', NUM(vTraf), 'accent', 'Fonte: planilha (aba Leads)')
         +card('CPA (ingresso)', vTraf>0?BRL(div(k.inv,vTraf)):'—', '', 'Custo por ingresso')
         +card('CTR', PCT(k.ctr))
         +card('CPC', BRL(k.cpc));
