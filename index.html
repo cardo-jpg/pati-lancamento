@@ -75,7 +75,7 @@
     .card.hl .k{ color:#bfe9fb; }
     .card .prev{ font-size:.75rem; color:var(--muted); margin-top:3px; }
     .card .v{ font-size:1.9rem; font-weight:800; margin-top:9px; line-height:1.05; white-space:nowrap; }
-    .card .v.accent{ color:var(--cyan); } .card .v.good{ color:var(--green); }
+    .card .v.accent{ color:var(--cyan); } .card .v.good{ color:var(--green); } .card .v.bad{ color:var(--red); }
     .card .tax{ font-size:.75rem; color:var(--muted); margin-top:6px; }
 
     .charts2{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
@@ -404,7 +404,7 @@
       h+=`<div class="lbl">Tráfego · Meta Ads (venda de ingresso)</div><div class="grid">`;
       h+=card('Investimento', BRL(k.inv), 'hl v', 'Verba: '+BRLk(VERBA), 'Usado '+PCT(div(k.inv,VERBA)*100))
         +card('Ingressos Tráfego', NUM(vTraf), 'accent')
-        +card('CPA (ingresso)', vTraf>0?BRL(div(k.inv,vTraf)):'—', '', 'Custo por ingresso')
+        +(()=>{const cpaAtual=vTraf>0?div(k.inv,vTraf):0;const CPA_ALVO=20;const dentro=cpaAtual>0&&cpaAtual<=CPA_ALVO;const cor=cpaAtual===0?'':dentro?'ok':'bad';return card('CPA (ingresso)', cpaAtual>0?BRL(cpaAtual):'—', cor, 'Alvo: '+BRL(CPA_ALVO), cpaAtual>0?(dentro?'✓ dentro do alvo':'acima do alvo'):'Custo por ingresso');})()
         +card('CTR', PCT(k.ctr))
         +card('CPC', BRL(k.cpc));
       h+=`</div>`;
