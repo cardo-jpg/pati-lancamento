@@ -67,6 +67,9 @@
     .gauge-stat-v{ font-size:1.3rem; font-weight:800; margin-top:2px; }
 
     .lbl{ font-size:.84rem; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); margin:30px 0 14px; }
+    .lem-bar{ height:14px; border-radius:8px; background:rgba(255,255,255,.06); overflow:hidden; margin-top:4px; }
+    .lem-bar-fill{ height:100%; border-radius:8px; background:linear-gradient(90deg,var(--cyan),var(--green)); transition:width .4s; }
+    .lem-bar-lbl{ font-size:.8rem; color:var(--muted); margin-top:7px; }
     .grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(205px,1fr)); gap:14px; }
     .card{ background:linear-gradient(165deg, rgba(24,37,56,.9), rgba(19,31,48,.7)); border:1px solid var(--border); border-radius:16px; padding:18px 20px; box-shadow:0 4px 22px rgba(0,0,0,.28); transition:transform .15s, border-color .15s; min-height:120px; display:flex; flex-direction:column; justify-content:center; }
     .card:hover{ transform:translateY(-2px); border-color:rgba(0,198,255,.4); }
@@ -178,6 +181,7 @@
       <button class="tab" data-p="campanhas" onclick="setTab(this)">Campanhas</button>
       <button class="tab" data-p="publicos" onclick="setTab(this)">Públicos</button>
       <button class="tab" data-p="criativos" onclick="setTab(this)">Criativos</button>
+      <button class="tab" data-p="lembrete" onclick="setTab(this)">Lembrete</button>
       <button class="tab" data-p="lp" onclick="setTab(this)">LP</button>
     </div>
 
@@ -191,6 +195,8 @@
     const AB_VENDAS = 'Vendas';      // tráfego (Meta Ads): funil de ingresso
     const AB_LEADS  = 'Leads ';      // vendas diárias manuais: Data, Leads Vendas Org, Leads Vendas Ads
     const AB_METAS  = 'Metas';       // total / orgânico / tráfego
+    const AB_LEMBRETE = 'Lembrete';  // campanha de lembrete do workshop (mesma estrutura de Vendas)
+    const VERBA_LEMBRETE = 3350;     // R$ disponível para a campanha de lembrete
     const START = new Date(2026, 7, 19);   // 19/08/2026 — início da venda de ingressos
     const END   = new Date(2026, 8, 7);    // 07/09/2026 — fim da venda de ingressos
     const FLOOR = new Date(2026, 7, 19);
@@ -198,7 +204,7 @@
     const LP_URL = 'https://abroadercompany.com/desafio-us300-ads/';   // única LP do lançamento
     const METAS_DEFAULT = { total:1200, org:700, traf:500 };
 
-    let DATA = { vendas:[], leadsOrg:{}, leadsAds:{}, leadsDates:[], metas:{...METAS_DEFAULT} };
+    let DATA = { vendas:[], lembrete:[], leadsOrg:{}, leadsAds:{}, leadsDates:[], metas:{...METAS_DEFAULT} };
     let profile='geral', presetDays='all';
 
     const BRL = v => (v==null||isNaN(v)) ? '—' : 'R$ ' + Number(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
@@ -349,9 +355,10 @@
     function render(){
       killCharts();
       const el=document.getElementById('body');
-      if(profile==='geral')   renderGeral(el);
-      else if(profile==='lp') renderLP(el);
-      else                    renderTabela(el, profile);
+      if(profile==='geral')        renderGeral(el);
+      else if(profile==='lp')      renderLP(el);
+      else if(profile==='lembrete')renderLembrete(el);
+      else                         renderTabela(el, profile);
       document.getElementById('updated').textContent='Atualizado '+new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
     }
 
@@ -499,6 +506,54 @@
       el.innerHTML=h;
     }
 
+    // ── Aba LEMBRETE (campanha de lembrete do workshop) ──
+    function renderLembrete(el){
+      const rows = DATA.lembrete.filter(r=>inRange(r.date));
+      const inv = rows.reduce((a,r)=>a+r.inv,0);
+      const imp = rows.reduce((a,r)=>a+r.imp,0);
+      const clk = rows.reduce((a,r)=>a+r.clk,0);
+      const disp = VERBA_LEMBRETE - inv;
+      const usado = div(inv,VERBA_LEMBRETE)*100;
+      const ctr = div(clk,imp)*100;
+      const cpc = div(inv,clk);
+      let h=`<div class="lbl">Campanha de Lembrete · verba disponível ${BRLk(VERBA_LEMBRETE)}</div><div class="grid">`;
+      h+=card('Investimento', BRL(inv), 'hl v', 'Verba: '+BRLk(VERBA_LEMBRETE), 'Usado '+PCT(usado))
+        +card('Disponível', BRL(disp), disp>0?'v good':'v bad', '', disp>0?'ainda dá pra gastar':'verba esgotada')
+        +card('Impressões', NUM(imp), 'accent')
+        +card('Cliques', NUM(clk))
+        +card('CTR', PCT(ctr))
+        +card('CPC', BRL(cpc));
+      h+=`</div>`;
+      // barra de progresso da verba
+      const pct=Math.min(100,usado);
+      h+=`<div class="lem-bar"><div class="lem-bar-fill" style="width:${pct}%"></div></div>
+          <div class="lem-bar-lbl">${BRL(inv)} usados de ${BRLk(VERBA_LEMBRETE)} · restam ${BRL(disp)}</div>`;
+      // gráfico investimento por dia
+      h+=`<div class="lbl" style="margin-top:22px">Investimento por Dia</div><div class="chart-card"><div class="chart-box tall"><canvas id="lemDay"></canvas></div></div>`;
+      // tabela por criativo
+      const list = groupBy(rows,'criativo').sort((a,b)=>b.inv-a.inv);
+      h+=`<div class="lbl" style="margin-top:22px">Por Criativo</div><div class="twrap"><table><thead><tr>
+        <th>Criativo</th><th>Investido</th><th>Impr.</th><th>Cliques</th><th>CTR</th><th>CPC</th><th>Anúncio</th>
+        </tr></thead><tbody>`;
+      if(!list.length){ h+=`<tr><td colspan="7" class="empty">Sem dados de lembrete no período.</td></tr>`; }
+      list.forEach(o=>{ h+=`<tr>
+        <td title="${o.nome}">${o.nome}</td><td>${BRL(o.inv)}</td><td>${NUM(o.imp)}</td>
+        <td>${NUM(o.clk)}</td><td>${PCT(o.ctr)}</td><td>${BRL(o.cpc)}</td>
+        <td>${o.link?`<a class="vlink" href="${o.link}" target="_blank">🔗 Ver</a>`:'—'}</td></tr>`; });
+      h+=`</tbody></table></div>`;
+      el.innerHTML=h;
+      // desenhar gráfico de barras invest/dia
+      const map={}; for(const r of rows){ const k=dkey(r.date); map[k]=(map[k]||0)+r.inv; }
+      const keys=Object.keys(map).sort();
+      const cv=document.getElementById('lemDay');
+      if(cv&&keys.length){ charts.push(new Chart(cv,{ type:'bar',
+        data:{ labels:keys.map(k=>{const p=k.split('-');return p[2]+'/'+p[1];}),
+          datasets:[{ data:keys.map(k=>+map[k].toFixed(2)), backgroundColor:'#00c6ffcc', borderRadius:4 }] },
+        options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>' '+BRL(c.parsed.y)}}},
+          scales:{ x:{grid:{color:'#ffffff08'},ticks:{color:'#7a90a8',font:{size:9}}}, y:{grid:{color:'#ffffff08'},ticks:{color:'#7a90a8',font:{size:9},callback:v=>'R$'+v},beginAtZero:true} } }
+      })); }
+    }
+
     // ── Aba LP (funil da landing page) — padrão Hire ──
     function lpDaily(rows){
       const map={};
@@ -591,12 +646,14 @@
     async function loadAll(){
       document.getElementById('body').innerHTML='<div class="loading">Carregando dados da planilha…</div>';
       try{
-        const [tV, tL, tM] = await Promise.all([
+        const [tV, tL, tM, tLem] = await Promise.all([
           gviz(SHEET,'sheet='+encodeURIComponent(AB_VENDAS)),
           gviz(SHEET,'sheet='+encodeURIComponent(AB_LEADS)),
           gviz(SHEET,'sheet='+encodeURIComponent(AB_METAS)).catch(()=>null),
+          gviz(SHEET,'sheet='+encodeURIComponent(AB_LEMBRETE)).catch(()=>null),
         ]);
         DATA.vendas = vendaRows(tV);
+        DATA.lembrete = tLem ? vendaRows(tLem) : [];
         const L = leadsRows(tL); DATA.leadsOrg=L.org; DATA.leadsAds=L.ads; DATA.leadsDates=L.dates;
         if(tM) DATA.metas = readMetas(tM);
         render();
