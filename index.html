@@ -100,6 +100,15 @@
     td:first-child,th:first-child{ text-align:left; max-width:320px; white-space:normal; }
     tr:last-child td{ border-bottom:none; }
     .vlink{ color:var(--cyan); text-decoration:none; font-size:.74rem; }
+    .stfilter{ display:inline-flex; gap:4px; background:rgba(255,255,255,.04); border:1px solid var(--border,#22303f); border-radius:20px; padding:3px; margin-bottom:12px; }
+    .stfilter button{ background:transparent; border:none; color:var(--sub,#7a90a8); font-family:inherit; font-size:.72rem; font-weight:700; padding:4px 12px; border-radius:16px; cursor:pointer; transition:.15s; white-space:nowrap; }
+    .stfilter button:hover{ color:#fff; }
+    .stfilter button.on{ background:rgba(167,139,250,.18); color:#a78bfa; }
+    .stfilter button.on[data-f="ativo"]{ background:rgba(0,229,160,.14); color:#00e5a0; }
+    .stfilter button.on[data-f="pausado"]{ background:rgba(255,209,102,.14); color:#ffd166; }
+    .stpill{ cursor:pointer; user-select:none; padding:2px 9px; border-radius:20px; font-size:.62rem; font-weight:700; white-space:nowrap; }
+    .stpill.ativo{ background:rgba(0,229,160,.12); color:#00e5a0; border:1px solid rgba(0,229,160,.25); }
+    .stpill.pausado{ background:rgba(255,209,102,.12); color:#ffd166; border:1px solid rgba(255,209,102,.3); }
     .fbar{ display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin:0 0 14px; }
     .w3filter{ width:100%; max-width:340px; padding:10px 14px; background:var(--surface); border:1px solid var(--border); border-radius:10px; color:var(--text); font-family:inherit; font-size:.85rem; }
     .w3filter::placeholder{ color:var(--muted); }
@@ -509,6 +518,13 @@
       el.innerHTML=h;
     }
 
+    // ── Classificador Ativo/Pausado (padrão da casa) — manual, clicável por criativo ──
+    let _vsriStatus={}; try{ _vsriStatus=JSON.parse(localStorage.getItem('pati_vsri_status')||'{}'); }catch(e){ _vsriStatus={}; }
+    function vsriSt(nome){ return _vsriStatus[nome]||'ativo'; }
+    window.toggleVsri=function(nome){ _vsriStatus[nome]= vsriSt(nome)==='pausado'?'ativo':'pausado'; try{localStorage.setItem('pati_vsri_status',JSON.stringify(_vsriStatus));}catch(e){} renderVendasSRI(document.getElementById('body')); };
+    let _vsriFilter='todos';
+    window.setVsriFilter=function(f){ _vsriFilter=f; renderVendasSRI(document.getElementById('body')); };
+
     // ── Aba VENDAS SRI (venda do curso R$697 via trafego) ──
     function renderVendasSRI(el){
       const rows = DATA.vendasSRI.filter(r=>inRange(r.date));
@@ -533,13 +549,24 @@
       h+=`</div>`;
       // Gráfico investimento × vendas por dia
       h+=`<div class="lbl">Investimento × Vendas por Dia</div><div class="chart-card"><div class="chart-box tall"><canvas id="cVSRI"></canvas></div></div>`;
-      // Tabela por criativo
-      const list = groupBy(rows,'criativo').sort((a,b)=> b.vendas-a.vendas || b.inv-a.inv);
-      h+=`<div class="lbl">Por Criativo</div><div class="twrap"><table><thead><tr>
-        <th>Criativo</th><th>Investido</th><th>Impr.</th><th>Cliques</th><th>CTR</th><th>Checkout</th><th>Vendas</th><th>CPA</th><th>Faturam.</th><th>Anúncio</th>
+      // Tabela por criativo (com classificador Ativo/Pausado)
+      const all = groupBy(rows,'criativo').sort((a,b)=> b.vendas-a.vendas || b.inv-a.inv);
+      const nAt=all.filter(o=>vsriSt(o.nome)==='ativo').length, nPa=all.length-nAt;
+      const list = _vsriFilter==='todos'?all:all.filter(o=>vsriSt(o.nome)===_vsriFilter);
+      h+=`<div class="lbl">Por Criativo</div>
+        <div class="stfilter">
+          <button data-f="todos" class="${_vsriFilter==='todos'?'on':''}" onclick="setVsriFilter('todos')">Todos (${all.length})</button>
+          <button data-f="ativo" class="${_vsriFilter==='ativo'?'on':''}" onclick="setVsriFilter('ativo')">Ativos (${nAt})</button>
+          <button data-f="pausado" class="${_vsriFilter==='pausado'?'on':''}" onclick="setVsriFilter('pausado')">Pausados (${nPa})</button>
+        </div>
+        <div class="twrap"><table><thead><tr>
+        <th>Criativo</th><th>Status</th><th>Investido</th><th>Impr.</th><th>Cliques</th><th>CTR</th><th>Checkout</th><th>Vendas</th><th>CPA</th><th>Faturam.</th><th>Anúncio</th>
         </tr></thead><tbody>`;
-      list.forEach(o=>{ h+=`<tr>
+      if(!list.length){ h+=`<tr><td colspan="11" style="text-align:center;color:var(--sub);padding:18px">Nenhum criativo com esse status.</td></tr>`; }
+      list.forEach(o=>{ const st=vsriSt(o.nome); const en=o.nome.replace(/'/g,"\\'");
+        h+=`<tr style="${st==='pausado'?'opacity:.55':''}">
         <td title="${o.nome}">${o.nome}</td>
+        <td><span class="stpill ${st}" onclick="toggleVsri('${en}')" title="Clique para alternar">${st==='pausado'?'⏸ Pausado':'● Ativo'}</span></td>
         <td>${BRL(o.inv)}</td><td>${NUM(o.imp)}</td><td>${NUM(o.clk)}</td>
         <td>${PCT(o.ctr)}</td><td>${NUM(o.chk)}</td>
         <td><b style="color:var(--cyan)">${NUM(o.vendas)}</b></td>
