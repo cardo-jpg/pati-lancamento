@@ -537,7 +537,6 @@
         +card('Vendas', NUM(k.vendas), 'accent', '', 'Curso SRI')
         +card('CPA (venda)', k.vendas>0?BRL(k.cpa):'—', '', 'Custo por venda')
         +card('Ticket Médio', k.vendas>0?BRL(k.ticket):'—')
-        +card('Faturamento', BRL(k.fat), 'good')
         +card('ROAS', (k.inv>0&&k.fat>0)?(k.roas).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})+'x':'—', (k.roas>=1?'good':''));
       h+=`</div>`;
       // Funil de venda
@@ -560,9 +559,9 @@
           <button data-f="pausado" class="${_vsriFilter==='pausado'?'on':''}" onclick="setVsriFilter('pausado')">Pausados (${nPa})</button>
         </div>
         <div class="twrap"><table><thead><tr>
-        <th>Criativo</th><th>Status</th><th>Investido</th><th>Impr.</th><th>Cliques</th><th>CTR</th><th>Checkout</th><th>Vendas</th><th>CPA</th><th>Faturam.</th><th>Anúncio</th>
+        <th>Criativo</th><th>Status</th><th>Investido</th><th>Impr.</th><th>Cliques</th><th>CTR</th><th>Checkout</th><th>Vendas</th><th>CPA</th><th>Anúncio</th>
         </tr></thead><tbody>`;
-      if(!list.length){ h+=`<tr><td colspan="11" style="text-align:center;color:var(--sub);padding:18px">Nenhum criativo com esse status.</td></tr>`; }
+      if(!list.length){ h+=`<tr><td colspan="10" style="text-align:center;color:var(--sub);padding:18px">Nenhum criativo com esse status.</td></tr>`; }
       list.forEach(o=>{ const st=vsriSt(o.nome); const en=o.nome.replace(/'/g,"\\'");
         h+=`<tr style="${st==='pausado'?'opacity:.55':''}">
         <td title="${o.nome}">${o.nome}</td>
@@ -570,7 +569,7 @@
         <td>${BRL(o.inv)}</td><td>${NUM(o.imp)}</td><td>${NUM(o.clk)}</td>
         <td>${PCT(o.ctr)}</td><td>${NUM(o.chk)}</td>
         <td><b style="color:var(--cyan)">${NUM(o.vendas)}</b></td>
-        <td>${o.vendas>0?BRL(o.cpa):'—'}</td><td>${BRL(o.fat)}</td>
+        <td>${o.vendas>0?BRL(o.cpa):'—'}</td>
         <td>${o.link?`<a class="vlink" href="${o.link}" target="_blank">🔗 Ver</a>`:'—'}</td></tr>`; });
       h+=`</tbody></table></div>`;
       el.innerHTML=h;
