@@ -66,6 +66,14 @@
     .gauge-stat-l{ font-size:.72rem; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; }
     .gauge-stat-v{ font-size:1.3rem; font-weight:800; margin-top:2px; }
 
+    .hero-total{ display:flex; align-items:center; justify-content:space-between; gap:20px; flex-wrap:wrap; padding:20px 26px; margin-bottom:22px; border-radius:18px; background:linear-gradient(135deg, rgba(0,198,255,.14), rgba(0,229,160,.08)); border:1px solid rgba(0,198,255,.35); box-shadow:0 10px 30px rgba(0,198,255,.10); }
+    .hero-total .ht-l{ font-size:.8rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--cyan); }
+    .hero-total .ht-v{ font-size:2.6rem; font-weight:800; line-height:1.05; color:var(--text); margin-top:4px; }
+    .hero-total .ht-sub{ font-size:.78rem; color:var(--muted); margin-top:6px; }
+    .hero-total .ht-break{ display:flex; gap:22px; flex-wrap:wrap; }
+    .hero-total .htb{ text-align:right; }
+    .hero-total .htb .n{ font-size:.72rem; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; }
+    .hero-total .htb .val{ font-size:1.15rem; font-weight:700; color:var(--text); margin-top:2px; }
     .lbl{ font-size:.84rem; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); margin:30px 0 14px; }
     .lem-bar{ height:14px; border-radius:8px; background:rgba(255,255,255,.06); overflow:hidden; margin-top:4px; }
     .lem-bar-fill{ height:100%; border-radius:8px; background:linear-gradient(90deg,var(--cyan),var(--green)); transition:width .4s; }
@@ -415,6 +423,22 @@
       const disp=Math.max(0, VERBA-k.inv);
 
       let h='';
+      // Total gasto no lançamento = soma do tráfego das 3 fases (ingresso + lembrete + curso SRI)
+      const invLem = DATA.lembrete.filter(r=>inRange(r.date)).reduce((a,r)=>a+r.inv,0);
+      const invSRI = DATA.vendasSRI.filter(r=>inRange(r.date)).reduce((a,r)=>a+r.inv,0);
+      const totalGasto = k.inv + invLem + invSRI;
+      h+=`<div class="hero-total">
+        <div>
+          <div class="ht-l">💰 Total Gasto no Lançamento</div>
+          <div class="ht-v">${BRL(totalGasto)}</div>
+          <div class="ht-sub">Soma de todo o tráfego do lançamento: ingresso + lembrete + curso SRI</div>
+        </div>
+        <div class="ht-break">
+          <div class="htb"><div class="n">Ingresso</div><div class="val">${BRL(k.inv)}</div></div>
+          <div class="htb"><div class="n">Lembrete</div><div class="val">${BRL(invLem)}</div></div>
+          <div class="htb"><div class="n">Curso SRI</div><div class="val">${BRL(invSRI)}</div></div>
+        </div>
+      </div>`;
       h+=`<div class="gauges">`;
       h+=gauge('Ingressos · Tráfego', vTraf, metaTraf, NUM, NUM(rTraf), NUM(Math.round(metaTraf/daysTotal)), paceOf(vTraf,metaTraf,rTraf));
       h+=gauge('Ingressos · Orgânico', vOrg, metaOrg, NUM, NUM(rOrg), NUM(Math.round(metaOrg/daysTotal)), paceOf(vOrg,metaOrg,rOrg));
